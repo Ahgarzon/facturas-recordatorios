@@ -51,6 +51,31 @@ La comprobación ejecuta n8n dos veces. Verifica tres clientes, el vínculo entr
 
 También puedes ejecutar el flujo manualmente y comparar el panel con Mailpit. La primera ejecución debe cambiar `FAC-0101` y `FAC-0103` a segundo recordatorio, y `FAC-0102` a desactivado. Las otras facturas quedan como estaban.
 
+### Repetir FAC-0104 en una instancia propia
+
+Usa una instancia recién preparada con la verificación inicial completada y el flujo en borrador. Abre el panel y confirma que `FAC-0104` está en **Primer recordatorio**, con fecha futura y sin avisos en el historial.
+
+Abre la consola de MongoDB de esa instancia local. El usuario de la aplicación lee su contraseña del entorno del contenedor.
+
+```sh
+docker compose exec mongo sh -lc 'mongosh mongodb://127.0.0.1:27017/facturas --username facturas_api --password "$MONGO_API_PASSWORD" --authenticationDatabase facturas'
+```
+
+En `mongosh`, adelanta únicamente la fecha del primer aviso de `FAC-0104`. Espera `matchedCount: 1` y `modifiedCount: 1`. La consulta siguiente debe mostrar solo `FAC-0104` antes de continuar.
+
+```js
+db.invoices.updateOne(
+  { _id: "FAC-0104", status: "primerrecordatorio", revision: 0, activeAttempt: null },
+  { $set: { nextReminderAt: new Date(Date.now() - 60_000) } }
+)
+db.invoices.find(
+  { activeAttempt: null, nextReminderAt: { $type: "date", $lte: new Date() } },
+  { _id: 1 }
+).toArray()
+```
+
+Ejecuta **Facturas · Procesar recordatorios** una vez. Comprueba que `FAC-0104` pasa a **Segundo recordatorio** y abre **Historial de avisos → Ver correo en bandeja**. El correo **Segundo recordatorio de tu factura · FAC-0104** debe tener destinatario `paramo@facturas.example.invalid` y el mismo `Message-ID` del historial. En **Correos de prueba**, debe figurar como **Leído** después de abrirlo.
+
 ## Leer los correos de prueba
 
 Después de ejecutar el flujo, abre **Correos de prueba** en el panel. También puedes abrir una factura y seguir el enlace de su aviso en el historial. Comprueba el asunto, destinatario ficticio, fecha de recepción y cuerpo del mensaje. Al abrirlo, Mailpit registra su lectura en la bandeja de prueba. El identificador del mensaje coincide con el del historial de la factura.
@@ -84,7 +109,7 @@ npm ci
 VITE_REVIEW_API_ORIGIN=https://tu-api.example npm run build -- --base=/facturas/
 ```
 
-Publica solo la salida de Vite bajo `/facturas/` y comparte el enlace HTTPS. Si alguien llega por HTTP, el panel lo dirige a HTTPS antes de mostrar el formulario. El proxy de la API debe permitir `Authorization` y el preflight CORS desde el origen exacto del sitio para `/api/invoices` y `/api/statuses`. Las consultas de datos siguen requiriendo la credencial de revisión. El formulario mantiene la sesión en memoria hasta cerrar sesión o recargar.
+Publica solo la salida de Vite bajo `/facturas/` y comparte el enlace HTTPS. Si alguien llega por HTTP, el panel lo dirige a HTTPS antes de mostrar el formulario. En el proxy de la API, habilita `Authorization` y el preflight CORS desde el origen exacto del sitio para `/api/invoices`, `/api/statuses`, `/api/demo-correos` y `/api/demo-correos/{id}`. Las consultas de datos siguen requiriendo la credencial de revisión. El formulario mantiene la sesión en memoria hasta cerrar sesión o recargar.
 
 ## Cambios y reversa
 
