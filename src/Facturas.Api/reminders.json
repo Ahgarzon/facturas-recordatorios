@@ -1,0 +1,23 @@
+{
+  "Reminders": {
+    "RetryMinutes": 15,
+    "StatusLabels": {
+      "primerrecordatorio": "Primer recordatorio",
+      "segundorecordatorio": "Segundo recordatorio",
+      "desactivado": "Desactivado"
+    },
+    "Rules": {
+      "primerrecordatorio": {
+        "ToStatus": "segundorecordatorio",
+        "Subject": "Segundo recordatorio de tu factura",
+        "Body": "Tu factura pasó a segundo recordatorio. Si ya realizaste el pago, puedes ignorar este aviso de demostración.",
+        "DelayMinutes": 1440
+      },
+      "segundorecordatorio": {
+        "ToStatus": "desactivado",
+        "Subject": "Aviso de desactivación de tu factura",
+        "Body": "Tu factura será marcada como desactivada. Este aviso corresponde a un ejercicio con datos ficticios."
+      }
+    }
+  }
+}

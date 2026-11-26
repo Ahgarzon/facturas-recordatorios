@@ -1,0 +1,13 @@
+**
+!src/
+!src/Facturas.Api/
+!src/Facturas.Api/**
+!web/
+!web/**
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/.env
+**/.env.*
+src/Facturas.Api/wwwroot/

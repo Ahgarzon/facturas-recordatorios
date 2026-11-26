@@ -1,0 +1,37 @@
+name: Verificar la demo
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Pruebas unitarias
+        run: dotnet test ControlFacturas.sln --configuration Release
+      - name: Preparar entorno aislado
+        run: |
+          node docker/create-env.mjs
+          docker compose up -d --build
+          docker compose run --rm n8n-setup
+      - name: Verificar el recorrido completo
+        run: node scripts/verify-demo.mjs
+      - name: Resumen de servicios ante un fallo
+        if: failure()
+        run: docker compose ps --all
+      - name: Finalizar el entorno efímero
+        if: always()
+        run: docker compose down --volumes

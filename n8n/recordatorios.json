@@ -1,0 +1,235 @@
+{
+  "id": "facturasAvisos",
+  "name": "Facturas · Procesar recordatorios",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "232acd69-f78a-413e-ae9e-b5512188b1c1",
+      "name": "Ejecutar manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 15 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "469b9874-3bb1-4fcf-ba11-74d769a6ad77",
+      "name": "Todos los días · 08:15",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "document",
+        "operation": "aggregate",
+        "collection": "invoices",
+        "query": "[\n  {\n    \"$match\": {\n      \"activeAttempt\": null,\n      \"nextReminderAt\": {\n        \"$type\": \"date\"\n      },\n      \"$expr\": {\n        \"$lte\": [\n          \"$nextReminderAt\",\n          \"$$NOW\"\n        ]\n      }\n    }\n  },\n  {\n    \"$sort\": {\n      \"nextReminderAt\": 1,\n      \"_id\": 1\n    }\n  },\n  {\n    \"$limit\": 50\n  },\n  {\n    \"$project\": {\n      \"_id\": 1,\n      \"revision\": 1\n    }\n  }\n]"
+      },
+      "id": "699892b7-6675-43e2-b196-f5c4be842902",
+      "name": "Facturas listas en MongoDB",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.5,
+      "position": [
+        250,
+        100
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "facturasMongoRead",
+          "name": "Facturas · Mongo solo lectura"
+        }
+      },
+      "notes": "Próximo aviso vencido y sin una operación en curso. Solo salen el identificador y la revisión.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3c8ea577-41f4-452c-b065-996ae80e15f6",
+              "leftValue": "={{ $json._id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "57676997-bc2d-41aa-a0da-31b781fb50ca",
+      "name": "¿Hay una factura?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        500,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'http://api:8080/api/internal/reminders/' + encodeURIComponent($json._id) }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ revision: $json.revision }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          },
+          "timeout": 45000
+        }
+      },
+      "id": "0f6f9d60-b2fc-4cb2-bf72-dde02b9b3aa6",
+      "name": "Procesar aviso en C#",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        750,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "facturasApiKey",
+          "name": "Facturas · Clave del flujo"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "La API decide y registra la transición. La clave se toma de las credenciales de esta instancia.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ JSON.stringify({ invoiceId: $('Facturas listas en MongoDB').item.json._id, revision: $('Facturas listas en MongoDB').item.json.revision, httpStatus: $json.statusCode ?? null, outcome: $json.body?.outcome ?? ($json.error ? 'error_transporte' : 'respuesta_sin_resultado'), result: $json.body ?? null }) }}",
+        "options": {}
+      },
+      "id": "2334cfdc-8d1e-4f48-8e7e-7cbeda835d78",
+      "name": "Resultado por factura",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1000,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"outcome\": \"sin_facturas\",\n  \"count\": 0\n}",
+        "options": {}
+      },
+      "id": "5fe579a7-74fb-4528-8a25-dd92c90d764e",
+      "name": "Lote sin facturas pendientes",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        750,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "Ejecutar manualmente": {
+      "main": [
+        [
+          {
+            "node": "Facturas listas en MongoDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Todos los días · 08:15": {
+      "main": [
+        [
+          {
+            "node": "Facturas listas en MongoDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facturas listas en MongoDB": {
+      "main": [
+        [
+          {
+            "node": "¿Hay una factura?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay una factura?": {
+      "main": [
+        [
+          {
+            "node": "Procesar aviso en C#",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Lote sin facturas pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar aviso en C#": {
+      "main": [
+        [
+          {
+            "node": "Resultado por factura",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota"
+  },
+  "pinData": {},
+  "versionId": "09ba1416-be46-499f-a5f5-d73ce17719a2",
+  "tags": []
+}

@@ -1,0 +1,21 @@
+# Configuración privada
+.env
+.env.*
+!.env.example
+*.pem
+*.pfx
+*.key
+*.local
+.n8n
+access/
+# Build y herramientas
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+.vs/
+.vscode/
+TestResults/
+coverage/
+output/
+tmp/

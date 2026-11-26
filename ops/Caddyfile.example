@@ -1,0 +1,24 @@
+{$DEMO_DOMAIN} {
+	header {
+		Cache-Control "private, no-store"
+		X-Robots-Tag "noindex, nofollow, noarchive"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+	}
+
+	route {
+		@internal path /api/internal /api/internal/*
+		respond @internal 404
+
+		@write not method GET HEAD
+		respond @write 405
+
+		basic_auth {
+			revision {$DEMO_PASSWORD_HASH}
+		}
+
+		reverse_proxy 127.0.0.1:18080 {
+			header_up -Authorization
+		}
+	}
+}
