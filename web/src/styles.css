@@ -439,3 +439,59 @@ select:hover { border-color: var(--line-strong); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; }
 }
+
+.top-bar__actions { display: flex; align-items: center; gap: 14px; }
+.logout-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: var(--control-radius);
+  background: transparent;
+  color: var(--accent);
+  font-size: var(--caption);
+  font-weight: 650;
+}
+.logout-button:hover { background: var(--hover); }
+
+.review-login {
+  width: min(100%, 390px);
+  margin-inline: auto;
+  padding: clamp(16px, 5vw, 25px);
+}
+.review-login h1 { font-size: 1.5rem; font-weight: 690; letter-spacing: -0.033em; }
+.review-login p { margin-top: 6px; color: var(--muted); font-size: var(--body); line-height: 1.45; }
+.review-login form { display: grid; gap: 14px; margin-top: 19px; }
+.review-login label { display: grid; gap: 5px; font-size: var(--body); font-weight: 580; }
+.review-login input {
+  width: 100%;
+  min-height: 44px;
+  padding: 7px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--control-radius);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem;
+}
+.review-login button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid var(--accent);
+  border-radius: var(--control-radius);
+  background: var(--accent-light);
+  color: var(--accent);
+  font-weight: 660;
+}
+.review-login button:disabled { opacity: .65; }
+
+@media (max-width: 380px) {
+  .top-bar__actions { gap: 4px; }
+  .top-bar__actions:has(.logout-button) .demo-label { font-size: 0.75rem; }
+}

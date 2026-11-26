@@ -63,6 +63,17 @@ ssh -N -L 15678:127.0.0.1:15678 -L 18025:127.0.0.1:18025 usuario@tu-vps
 
 Antes de compartir, comprueba que el panel pide acceso, que carga con una cuenta autorizada y que el proxy bloquea la ruta `/api/internal/`. La API también exige la llave de n8n para procesar facturas.
 
+### Panel bajo una ruta de un sitio estático
+
+El frontend admite alojarse en un origen diferente del VPS. Compila desde `web/` con el origen HTTPS de la API y el prefijo donde se publicarán los archivos:
+
+```sh
+npm ci
+VITE_REVIEW_API_ORIGIN=https://tu-api.example npm run build -- --base=/facturas/
+```
+
+Publica solo la salida de Vite bajo `/facturas/`. El proxy de la API debe permitir `Authorization` y el preflight CORS desde el origen exacto del sitio para `/api/invoices` y `/api/statuses`. Las consultas de datos siguen requiriendo la credencial de revisión. El formulario mantiene la sesión en memoria hasta cerrar sesión o recargar.
+
 ## Cambios y reversa
 
 Después de editar la política, reconstruye solo la API con `docker compose up -d --build api`. Revisa `/api/statuses` y ejecuta un aviso sobre datos ficticios.

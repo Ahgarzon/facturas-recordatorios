@@ -1,9 +1,12 @@
-import { useState } from 'react'
-import { ArrowDown, CircleAlert, ReceiptText, RefreshCw } from 'lucide-react'
+import { useCallback, useState } from 'react'
+import { ArrowDown, CircleAlert, LogOut, ReceiptText, RefreshCw } from 'lucide-react'
 import { InvoiceDetails } from './InvoiceDetails'
 import { InvoiceTable } from './InvoiceTable'
 import { statusLabel, timeFormat } from './invoices'
 import type { Invoice } from './invoices'
+import { ReviewLogin } from './ReviewLogin'
+import { reviewApiOrigin } from './reviewApi'
+import type { ReviewSession } from './reviewApi'
 import { useInvoices } from './useInvoices'
 
 type View = 'all' | 'scheduled' | 'closed' | 'review'
@@ -26,8 +29,38 @@ function TablePlaceholder() {
   )
 }
 
-export default function App() {
-  const { invoices, labels, updatedAt, refreshing, requestFailed, refresh } = useInvoices()
+function Header({ onLogout }: { onLogout?: () => void }) {
+  return (
+    <header className="top-bar">
+      <div className="top-bar__inner">
+        <div className="brand">
+          <span className="brand-icon"><ReceiptText size={19} aria-hidden="true" /></span>
+          <span>Control de facturas</span>
+        </div>
+        <div className="top-bar__actions">
+          <span className="demo-label"><span aria-hidden="true" /> Datos ficticios</span>
+          {onLogout ? (
+            <button className="logout-button" type="button" aria-label="Cerrar sesión" onClick={onLogout}>
+              <LogOut size={15} aria-hidden="true" />
+              Salir
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </header>
+  )
+}
+
+function Dashboard({
+  session,
+  onLogout,
+  onAuthenticationFailed,
+}: {
+  session?: ReviewSession
+  onLogout?: () => void
+  onAuthenticationFailed?: () => void
+}) {
+  const { invoices, labels, updatedAt, refreshing, requestFailed, refresh } = useInvoices(session, onAuthenticationFailed)
   const [view, setView] = useState<View>('all')
   const [customer, setCustomer] = useState('')
   const [status, setStatus] = useState('')
@@ -51,15 +84,7 @@ export default function App() {
 
   return (
     <>
-      <header className="top-bar">
-        <div className="top-bar__inner">
-          <div className="brand">
-            <span className="brand-icon"><ReceiptText size={19} aria-hidden="true" /></span>
-            <span>Control de facturas</span>
-          </div>
-          <span className="demo-label"><span aria-hidden="true" /> Datos ficticios</span>
-        </div>
-      </header>
+      <Header onLogout={onLogout} />
 
       <main className="workspace">
         <section className="ledger" aria-labelledby="ledger-title">
@@ -157,6 +182,32 @@ export default function App() {
       </main>
 
       {selected ? <InvoiceDetails invoice={selected} labels={labels} onClose={() => setSelectedId(null)} /> : null}
+    </>
+  )
+}
+
+export default function App() {
+  const [session, setSession] = useState<ReviewSession | null>(null)
+  const [expired, setExpired] = useState(false)
+
+  const rejectSession = useCallback(() => {
+    setExpired(true)
+    setSession(null)
+  }, [])
+
+  function logOut() {
+    setExpired(false)
+    setSession(null)
+  }
+
+  if (!reviewApiOrigin) return <Dashboard />
+
+  return session ? (
+    <Dashboard session={session} onLogout={logOut} onAuthenticationFailed={rejectSession} />
+  ) : (
+    <>
+      <Header />
+      <ReviewLogin expired={expired} onLogin={setSession} />
     </>
   )
 }
