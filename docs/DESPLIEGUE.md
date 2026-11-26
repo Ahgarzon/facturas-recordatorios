@@ -72,7 +72,7 @@ npm ci
 VITE_REVIEW_API_ORIGIN=https://tu-api.example npm run build -- --base=/facturas/
 ```
 
-Publica solo la salida de Vite bajo `/facturas/`. El proxy de la API debe permitir `Authorization` y el preflight CORS desde el origen exacto del sitio para `/api/invoices` y `/api/statuses`. Las consultas de datos siguen requiriendo la credencial de revisión. El formulario mantiene la sesión en memoria hasta cerrar sesión o recargar.
+Publica solo la salida de Vite bajo `/facturas/` y comparte el enlace HTTPS. Si alguien llega por HTTP, el panel lo dirige a HTTPS antes de mostrar el formulario. El proxy de la API debe permitir `Authorization` y el preflight CORS desde el origen exacto del sitio para `/api/invoices` y `/api/statuses`. Las consultas de datos siguen requiriendo la credencial de revisión. El formulario mantiene la sesión en memoria hasta cerrar sesión o recargar.
 
 ## Cambios y reversa
 
