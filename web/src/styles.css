@@ -426,7 +426,7 @@ select:hover { border-color: var(--line-strong); }
     border-top: 1px solid var(--line);
   }
   .invoice-table tbody tr > :where(th, td) { padding: 0; border: none; font-size: var(--caption); }
-  .invoice-table .invoice-table__invoice { grid-column: 1; grid-row: 1; padding: 0; }
+  .invoice-table tbody th.invoice-table__invoice { grid-column: 1; grid-row: 1; padding: 0; }
   .invoice-table__customer { grid-column: 1; grid-row: 2; line-height: 1.4; }
   .invoice-table__number { grid-column: 2; grid-row: 1; justify-self: end; }
   .invoice-table__status { grid-column: 2; grid-row: 2; justify-self: end; }

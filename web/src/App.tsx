@@ -100,7 +100,7 @@ export default function App() {
                 <label htmlFor="customer-filter">Cliente</label>
                 <span className="select-wrap">
                   <select id="customer-filter" value={customer} onChange={(event) => setCustomer(event.target.value)}>
-                    <option value="">Todos los clientes</option>
+                    <option value="">Todos</option>
                     {customers.map((name) => <option key={name} value={name}>{name}</option>)}
                   </select>
                   <ArrowDown size={14} aria-hidden="true" />
@@ -110,7 +110,7 @@ export default function App() {
                 <label htmlFor="status-filter">Estado</label>
                 <span className="select-wrap">
                   <select id="status-filter" value={status} onChange={(event) => setStatus(event.target.value)}>
-                    <option value="">Todos los estados</option>
+                    <option value="">Todos</option>
                     {statuses.map((value) => <option key={value} value={value}>{statusLabel(value, labels)}</option>)}
                   </select>
                   <ArrowDown size={14} aria-hidden="true" />
