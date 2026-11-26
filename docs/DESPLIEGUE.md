@@ -28,6 +28,16 @@ docker compose run --rm --no-deps -T n8n execute --id facturasAvisos
 
 Para activar la ejecución automática, publica el flujo desde el editor o con la CLI de n8n. El disparador configurado corresponde a las 8:15 a. m. de Colombia. Durante la revisión, se puede conservar en borrador para que las facturas pendientes estén disponibles hasta que alguien dispare la demo.
 
+## Conectar una instancia de n8n existente
+
+Levanta solo los servicios de la aplicación con `docker compose up -d --build mongo mailpit api`. Importa [el flujo](../n8n/recordatorios.json) en tu cuenta de n8n. Para esa instancia, configura:
+
+- Una credencial MongoDB con el usuario `facturas_consulta`, acceso de lectura a `facturas` y una dirección privada que sea alcanzable desde n8n.
+- Una credencial HTTP Header Auth con el encabezado `X-Workflow-Key` y el valor `WORKFLOW_KEY` de la configuración privada.
+- La URL interna de la API en el nodo **Procesar aviso en C#**. Conserva la ruta `/api/internal/reminders/` y la expresión que añade el identificador de factura.
+
+Ejecuta el disparador manual y abre Mailpit para verificar los avisos. Restringe a la red privada el tráfico desde n8n a MongoDB y a la ruta interna. El panel público de revisión solo necesita las rutas de lectura, con autenticación.
+
 ## Revisar el recorrido
 
 Con una instalación nueva y el flujo aún sin ejecutar:
