@@ -30,12 +30,21 @@ builder.Services.AddSingleton<IInvoiceStore>(services => services.GetRequiredSer
 builder.Services.AddSingleton<IReminderMail, SmtpReminderMail>();
 builder.Services.AddScoped<ReminderProcessor>();
 
+var demoSeed = builder.Configuration.GetValue<bool>("Demo:Seed");
+var mailpitUrl = demoSeed ? builder.Configuration["Demo:MailpitUrl"] : null;
+var demoInboxEnabled = !string.IsNullOrWhiteSpace(mailpitUrl);
+if (demoInboxEnabled)
+    builder.Services.AddDemoInbox(mailpitUrl!);
+
 var app = builder.Build();
 app.UseExceptionHandler();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
 var api = app.MapGroup("/api");
+if (demoInboxEnabled)
+    api.MapDemoInbox();
+
 api.MapGet("/health", async (IMongoDatabase database, CancellationToken cancellation) =>
 {
     try
@@ -84,7 +93,7 @@ api.MapPost("/internal/reminders/{id}", async (HttpRequest request, string id, R
     return Results.Ok(await processor.ProcessAsync(id, input.Revision, cancellation));
 });
 
-if (app.Configuration.GetValue<bool>("Demo:Seed"))
+if (demoSeed)
 {
     var clock = app.Services.GetRequiredService<TimeProvider>();
     using var startup = new CancellationTokenSource(TimeSpan.FromSeconds(20));

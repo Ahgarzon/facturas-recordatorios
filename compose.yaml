@@ -70,6 +70,7 @@ services:
       Smtp__Host: mailpit
       Smtp__Port: "1025"
       Demo__Seed: "true"
+      Demo__MailpitUrl: http://mailpit:8025
     depends_on:
       mongo:
         condition: service_healthy

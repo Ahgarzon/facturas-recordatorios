@@ -5,7 +5,7 @@ export type ReviewSession = {
   invoices: Invoice[]
 }
 
-type ReviewPath = '/api/invoices' | '/api/statuses'
+type ReviewPath = '/api/invoices' | '/api/statuses' | '/api/demo-correos' | `/api/demo-correos/${string}`
 
 export const reviewApiOrigin = import.meta.env.VITE_REVIEW_API_ORIGIN
 

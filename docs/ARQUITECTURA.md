@@ -6,6 +6,8 @@
 
 La interfaz React consulta el resumen de MongoDB a través de la misma API. Las transiciones viven en C#. n8n maneja el disparo y la consulta inicial, con un usuario MongoDB de solo lectura. La API comprueba de nuevo la elegibilidad de cada factura antes de usar su propia credencial de escritura.
 
+En modo de prueba, el identificador de mensaje conecta el historial con una captura efectiva de Mailpit. La API de la bandeja devuelve el texto y los metadatos de los avisos ficticios vinculados. La apertura muestra el contenido y registra la lectura en el buzón de prueba. El acceso de revisión se limita a esa vista y al resumen de facturas.
+
 | Estado actual | Correo de la demo | Estado al aceptar SMTP |
 | --- | --- | --- |
 | `primerrecordatorio` | La factura pasa a segundo recordatorio. | `segundorecordatorio` |

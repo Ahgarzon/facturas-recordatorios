@@ -47,9 +47,21 @@ dotnet test ControlFacturas.sln
 node scripts/verify-demo.mjs
 ```
 
-La comprobación ejecuta n8n dos veces. Verifica tres clientes, el vínculo entre los correos capturados y sus transiciones, y que la segunda ejecución inmediata conserve el historial y la cantidad de correos. La misma comprobación está en GitHub Actions.
+La comprobación ejecuta n8n dos veces. Verifica tres clientes, el vínculo entre los correos capturados y sus transiciones, la apertura de un mensaje desde la API del panel y que la segunda ejecución inmediata conserve el historial y la cantidad de correos. La misma comprobación está en GitHub Actions.
 
 También puedes ejecutar el flujo manualmente y comparar el panel con Mailpit. La primera ejecución debe cambiar `FAC-0101` y `FAC-0103` a segundo recordatorio, y `FAC-0102` a desactivado. Las otras facturas quedan como estaban.
+
+## Leer los correos de prueba
+
+Después de ejecutar el flujo, abre **Correos de prueba** en el panel. También puedes abrir una factura y seguir el enlace de su aviso en el historial. Comprueba el asunto, destinatario ficticio, fecha de recepción y cuerpo del mensaje. Al abrirlo, Mailpit registra su lectura en la bandeja de prueba. El identificador del mensaje coincide con el del historial de la factura.
+
+Compose habilita esta vista con `Demo__MailpitUrl`. La API solamente muestra capturas ligadas a avisos registrados. Los mensajes se visualizan como texto.
+
+## Conectar un buzón real
+
+La configuración de la prueba envía los avisos a Mailpit. Para entregar a un buzón real, conecta un proveedor SMTP autorizado, configura su host y puerto con TLS, y añade la autenticación al adaptador de correo. Guarda las credenciales fuera de Git y elige un remitente permitido y una dirección real aprobada para verificar la entrega. Gmail admite OAuth 2.0 para SMTP y un servicio transaccional como Resend admite SMTP autenticado con dominio verificado. [Google](https://developers.google.com/workspace/gmail/imap/xoauth2-protocol) · [Resend](https://resend.com/docs/send-with-smtp)
+
+Para un buzón externo, la aceptación SMTP y la entrega al servidor del destinatario son eventos de transporte. Puedes registrar entrega o rebote con los eventos del proveedor. La lectura que muestra esta demo corresponde a la apertura del correo en Mailpit.
 
 ## VPS y acceso
 

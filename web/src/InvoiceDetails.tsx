@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react'
-import { ArrowRight, CircleAlert, Clock3, MailCheck, X } from 'lucide-react'
+import { ArrowRight, CircleAlert, Clock3, MailCheck, MailOpen } from 'lucide-react'
+import { DetailDrawer } from './DetailDrawer'
 import { formatDate, formatMoney, reminderSchedule, statusLabel } from './invoices'
 import type { Invoice, StatusLabels } from './invoices'
 import { InvoiceStatus } from './InvoiceTable'
@@ -8,32 +8,22 @@ export function InvoiceDetails({
   invoice,
   labels,
   onClose,
+  onOpenMail,
 }: {
   invoice: Invoice
   labels: StatusLabels
   onClose: () => void
+  onOpenMail: (messageId: string) => void
 }) {
-  const dialog = useRef<HTMLDialogElement>(null)
   const history = [...invoice.history].sort((a, b) => b.sentAt.localeCompare(a.sentAt))
 
-  useEffect(() => {
-    const element = dialog.current
-    if (element && !element.open) element.showModal()
-  }, [])
-
   return (
-    <dialog className="invoice-detail" aria-labelledby="invoice-detail-title" ref={dialog} onClose={onClose}>
-      <div className="invoice-detail__header">
-        <div>
-          <p className="muted">{invoice.customer}</p>
-          <h2 id="invoice-detail-title">Factura {invoice.number}</h2>
-        </div>
-        <form method="dialog">
-          <button className="icon-button" type="submit" aria-label="Cerrar detalle">
-            <X size={20} aria-hidden="true" />
-          </button>
-        </form>
-      </div>
+    <DetailDrawer
+      title={`Factura ${invoice.number}`}
+      subtitle={invoice.customer}
+      closeLabel="Cerrar detalle"
+      onClose={onClose}
+    >
 
       <dl className="detail-summary">
         <div>
@@ -94,12 +84,16 @@ export function InvoiceDetails({
                   <span className="history-id">
                     ID del mensaje <code>{entry.messageId}</code>
                   </span>
+                  <button className="history-mail-link" type="button" onClick={() => onOpenMail(entry.messageId)}>
+                    <MailOpen size={16} aria-hidden="true" />
+                    Ver correo en bandeja
+                  </button>
                 </div>
               </li>
             ))}
           </ol>
         )}
       </section>
-    </dialog>
+    </DetailDrawer>
   )
 }

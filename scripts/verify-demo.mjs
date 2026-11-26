@@ -35,6 +35,7 @@ function status(invoiceList, number) {
 
 const before = await waitForApi();
 assert.equal(new Set(before.map(invoice => invoice.customer)).size, 3);
+assert.deepEqual(await json(app, '/api/demo-correos'), []);
 assert.equal(status(before, 'FAC-0101'), 'primerrecordatorio');
 assert.equal(status(before, 'FAC-0102'), 'segundorecordatorio');
 assert.equal(status(before, 'FAC-0103'), 'primerrecordatorio');
@@ -60,6 +61,18 @@ for (const number of ['FAC-0104', 'FAC-0105', 'FAC-0106']) {
   assert.equal(status(after, number), status(before, number), number);
 }
 
+const received = await json(app, '/api/demo-correos');
+assert.equal(received.length, 3);
+assert.ok(received.every(message => message.read === false));
+const captured = received.find(message => message.invoiceNumber === 'FAC-0101');
+assert.equal(captured.messageId, after.find(invoice => invoice.number === 'FAC-0101').history[0].messageId);
+const opened = await json(app, '/api/demo-correos/' + encodeURIComponent(captured.id));
+assert.equal(opened.messageId, captured.messageId);
+assert.match(opened.text, /FAC-0101/);
+assert.equal(opened.read, true);
+const refreshedInbox = await json(app, '/api/demo-correos');
+assert.equal(refreshedInbox.find(message => message.id === captured.id).read, true);
+
 const inbox = await json(mail, '/api/v1/messages');
 assert.equal(inbox.total, inboxBefore.total + 3);
 const messages = await Promise.all(inbox.messages.map(message => json(mail, '/api/v1/message/' + message.ID)));
@@ -81,4 +94,4 @@ for (const invoice of after) {
   assert.deepEqual(current.history, invoice.history, invoice.number);
 }
 assert.equal((await json(mail, '/api/v1/messages')).total, inbox.total);
-console.log('Verificado: 3 clientes, 3 correos vinculados, 3 cambios de estado y 0 duplicados al repetir.');
+console.log('Verificado: 3 clientes, 3 recepciones ligadas al historial, lectura visible y 0 duplicados al repetir.');

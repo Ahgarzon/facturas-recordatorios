@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
-import { ArrowDown, CircleAlert, LogOut, ReceiptText, RefreshCw } from 'lucide-react'
+import { ArrowDown, CircleAlert, LogOut, Mail, ReceiptText, RefreshCw } from 'lucide-react'
+import { DemoInbox } from './DemoInbox'
 import { InvoiceDetails } from './InvoiceDetails'
 import { InvoiceTable } from './InvoiceTable'
 import { statusLabel, timeFormat } from './invoices'
@@ -65,6 +66,7 @@ function Dashboard({
   const [customer, setCustomer] = useState('')
   const [status, setStatus] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [inbox, setInbox] = useState<{ messageId?: string } | null>(null)
 
   const customers = [...new Set(invoices?.map((invoice) => invoice.customer))].sort()
   const entries = invoices?.filter((invoice) => !customer || invoice.customer === customer)
@@ -75,6 +77,11 @@ function Dashboard({
   const filtered = available?.filter((invoice) => !status || invoice.status === status)
   const selected = invoices?.find((invoice) => invoice.id === selectedId)
   const filtersActive = Boolean(view !== 'all' || customer || status)
+
+  function goToInbox(messageId?: string) {
+    setSelectedId(null)
+    setInbox({ messageId })
+  }
 
   function clearFilters() {
     setView('all')
@@ -87,101 +94,119 @@ function Dashboard({
       <Header onLogout={onLogout} />
 
       <main className="workspace">
-        <section className="ledger" aria-labelledby="ledger-title">
-          <div className="ledger__heading">
-            <div>
-              <h1 id="ledger-title">Facturas</h1>
-              {invoices ? (
-                <p>{invoices.length} {invoices.length === 1 ? 'factura' : 'facturas'} · {customers.length} {customers.length === 1 ? 'cliente' : 'clientes'}</p>
-              ) : null}
-            </div>
-            <button className="refresh-button" type="button" onClick={() => void refresh()} disabled={refreshing}>
-              <RefreshCw className={refreshing ? 'is-spinning' : undefined} size={16} aria-hidden="true" />
-              {refreshing ? 'Actualizando…' : 'Actualizar'}
-            </button>
-          </div>
-
-          <div className="ledger__controls">
-            <div className="views" role="group" aria-label="Vistas de facturas">
-              {groups.map((option) => (
-                <button
-                  className="view"
-                  key={option.id}
-                  type="button"
-                  aria-pressed={option.id === view}
-                  onClick={() => {
-                    setView(option.id)
-                    setStatus('')
-                  }}
-                >
-                  {option.label}
-                  <span className="view__count">{option.invoices?.length ?? '—'}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="filters">
-              <div className="filter">
-                <label htmlFor="customer-filter">Cliente</label>
-                <span className="select-wrap">
-                  <select id="customer-filter" value={customer} onChange={(event) => setCustomer(event.target.value)}>
-                    <option value="">Todos</option>
-                    {customers.map((name) => <option key={name} value={name}>{name}</option>)}
-                  </select>
-                  <ArrowDown size={14} aria-hidden="true" />
-                </span>
-              </div>
-              <div className="filter">
-                <label htmlFor="status-filter">Estado</label>
-                <span className="select-wrap">
-                  <select id="status-filter" value={status} onChange={(event) => setStatus(event.target.value)}>
-                    <option value="">Todos</option>
-                    {statuses.map((value) => <option key={value} value={value}>{statusLabel(value, labels)}</option>)}
-                  </select>
-                  <ArrowDown size={14} aria-hidden="true" />
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {requestFailed ? (
-            <div className="notice notice--ledger" role="alert">
-              <CircleAlert size={18} aria-hidden="true" />
+        <nav className="workspace-nav" aria-label="Secciones del panel">
+          <button type="button" aria-current={inbox ? undefined : 'page'} onClick={() => setInbox(null)}>
+            <ReceiptText size={16} aria-hidden="true" /> Facturas
+          </button>
+          <button type="button" aria-current={inbox ? 'page' : undefined} onClick={() => goToInbox()}>
+            <Mail size={16} aria-hidden="true" /> Correos de prueba
+          </button>
+        </nav>
+        {inbox ? (
+          <DemoInbox
+            authorization={session?.authorization}
+            onAuthenticationFailed={onAuthenticationFailed}
+            messageId={inbox.messageId}
+          />
+        ) : (
+          <section className="ledger" aria-labelledby="ledger-title">
+            <div className="ledger__heading">
               <div>
-                <strong>No se pudo consultar la lista de facturas.</strong>
-                <p>{invoices ? 'Se muestra la última consulta disponible. Usa Actualizar para reintentar.' : 'Usa Actualizar para reintentar.'}</p>
-              </div>
-            </div>
-          ) : null}
-
-          {filtered ? (
-            filtered.length ? (
-              <InvoiceTable invoices={filtered} labels={labels} onSelect={setSelectedId} />
-            ) : (
-              <div className="empty-table">
-                <h2>{filtersActive ? 'Sin coincidencias' : 'Todavía no hay facturas'}</h2>
-                {filtersActive ? (
-                  <button className="refresh-button" type="button" onClick={clearFilters}>Limpiar filtros</button>
+                <h1 id="ledger-title">Facturas</h1>
+                {invoices ? (
+                  <p>{invoices.length} {invoices.length === 1 ? 'factura' : 'facturas'} · {customers.length} {customers.length === 1 ? 'cliente' : 'clientes'}</p>
                 ) : null}
               </div>
-            )
-          ) : refreshing ? <TablePlaceholder /> : null}
-
-          <div className="ledger__footer">
-            <span aria-live="polite">
-              {filtered ? `${filtered.length} de ${invoices?.length} facturas` : '—'}
-            </span>
-            <div className="ledger__timestamps">
-              {updatedAt ? (
-                <span>Actualizado <time dateTime={updatedAt.toISOString()}>{timeFormat.format(updatedAt)}</time></span>
-              ) : null}
-              <span>Hora de Colombia</span>
+              <button className="refresh-button" type="button" onClick={() => void refresh()} disabled={refreshing}>
+                <RefreshCw className={refreshing ? 'is-spinning' : undefined} size={16} aria-hidden="true" />
+                {refreshing ? 'Actualizando…' : 'Actualizar'}
+              </button>
             </div>
-          </div>
-        </section>
+
+            <div className="ledger__controls">
+              <div className="views" role="group" aria-label="Vistas de facturas">
+                {groups.map((option) => (
+                  <button
+                    className="view"
+                    key={option.id}
+                    type="button"
+                    aria-pressed={option.id === view}
+                    onClick={() => {
+                      setView(option.id)
+                      setStatus('')
+                    }}
+                  >
+                    {option.label}
+                    <span className="view__count">{option.invoices?.length ?? '—'}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="filters">
+                <div className="filter">
+                  <label htmlFor="customer-filter">Cliente</label>
+                  <span className="select-wrap">
+                    <select id="customer-filter" value={customer} onChange={(event) => setCustomer(event.target.value)}>
+                      <option value="">Todos</option>
+                      {customers.map((name) => <option key={name} value={name}>{name}</option>)}
+                    </select>
+                    <ArrowDown size={14} aria-hidden="true" />
+                  </span>
+                </div>
+                <div className="filter">
+                  <label htmlFor="status-filter">Estado</label>
+                  <span className="select-wrap">
+                    <select id="status-filter" value={status} onChange={(event) => setStatus(event.target.value)}>
+                      <option value="">Todos</option>
+                      {statuses.map((value) => <option key={value} value={value}>{statusLabel(value, labels)}</option>)}
+                    </select>
+                    <ArrowDown size={14} aria-hidden="true" />
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {requestFailed ? (
+              <div className="notice notice--ledger" role="alert">
+                <CircleAlert size={18} aria-hidden="true" />
+                <div>
+                  <strong>No se pudo consultar la lista de facturas.</strong>
+                  <p>{invoices ? 'Se muestra la última consulta disponible. Usa Actualizar para reintentar.' : 'Usa Actualizar para reintentar.'}</p>
+                </div>
+              </div>
+            ) : null}
+
+            {filtered ? (
+              filtered.length ? (
+                <InvoiceTable invoices={filtered} labels={labels} onSelect={setSelectedId} />
+              ) : (
+                <div className="empty-table">
+                  <h2>{filtersActive ? 'Sin coincidencias' : 'Todavía no hay facturas'}</h2>
+                  {filtersActive ? (
+                    <button className="refresh-button" type="button" onClick={clearFilters}>Limpiar filtros</button>
+                  ) : null}
+                </div>
+              )
+            ) : refreshing ? <TablePlaceholder /> : null}
+
+            <div className="ledger__footer">
+              <span aria-live="polite">
+                {filtered ? `${filtered.length} de ${invoices?.length} facturas` : '—'}
+              </span>
+              <div className="ledger__timestamps">
+                {updatedAt ? (
+                  <span>Actualizado <time dateTime={updatedAt.toISOString()}>{timeFormat.format(updatedAt)}</time></span>
+                ) : null}
+                <span>Hora de Colombia</span>
+              </div>
+            </div>
+          </section>
+        )}
       </main>
 
-      {selected ? <InvoiceDetails invoice={selected} labels={labels} onClose={() => setSelectedId(null)} /> : null}
+      {selected ? (
+        <InvoiceDetails invoice={selected} labels={labels} onClose={() => setSelectedId(null)} onOpenMail={goToInbox} />
+      ) : null}
     </>
   )
 }
